@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import mainBannerImage from '../../image/center.webp';
-import sideBanner1 from '../../image/a-17.webp';
-import sideBanner2 from '../../image/macbook-giao-xa-2026.png';
-import sideBanner3 from '../../image/mbam5homepae.webp';
 
 const ChevronRight = () => (
   <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -19,8 +15,12 @@ const ItemIcon = () => (
 
 const menuItems = ['Điện thoại', 'Laptop', 'Tablet'];
 
-const mainBanner = mainBannerImage;
-const sideBanners = [sideBanner1, sideBanner2, sideBanner3];
+const mainBanner = 'https://placehold.co/1200x560/d70018/ffffff?text=CELLPHONES+MEGA+SALE';
+const sideBanners = [
+  'https://placehold.co/600x180/111827/ffffff?text=iPhone+17+Series',
+  'https://placehold.co/600x180/0f766e/ffffff?text=MacBook+Air+M5',
+  'https://placehold.co/600x180/1d4ed8/ffffff?text=Accessory+Deals',
+];
 
 // Chuẩn hóa text để map tên danh mục có/không dấu.
 const normalizeText = (value = '') =>
