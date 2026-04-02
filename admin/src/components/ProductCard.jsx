@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../config/url';
 
 const HeartIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -18,7 +19,7 @@ const ProductCard = ({
 }) => {
   const productLink = productId ? `/product/${productId}` : '#';
   const imageSrc = productId
-    ? `/api/products/${productId}/image`
+    ? `${API_BASE_URL}/api/products/${productId}/image`
     : image || 'https://placehold.co/300x300?text=Product';
 
   return (

@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
+import { API_BASE_URL } from '../config/url';
 
 // Trang chi tiết sản phẩm: hiển thị biến thể, thông số và thao tác mua.
 const ProductDetailPage = () => {
@@ -25,7 +26,7 @@ const ProductDetailPage = () => {
 
         const data = await response.json();
         setProduct(data);
-        setMainImage(`/api/products/${data._id}/image`);
+        setMainImage(`${API_BASE_URL}/api/products/${data._id}/image`);
       } catch (err) {
         setError(err.message || 'Đã xảy ra lỗi khi tải chi tiết sản phẩm');
       } finally {

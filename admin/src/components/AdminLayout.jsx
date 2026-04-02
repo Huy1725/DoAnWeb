@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { FRONTEND_SITE_URL } from '../config/url';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const AdminLayout = () => {
         </nav>
 
         <div className="mt-auto space-y-2 border-t border-gray-700 p-4">
-          <a href={process.env.VITE_FRONTEND_URL || 'http://localhost:5173'} className="block rounded bg-gray-700 px-3 py-2 text-center text-sm hover:bg-gray-600">
+          <a href={FRONTEND_SITE_URL} className="block rounded bg-gray-700 px-3 py-2 text-center text-sm hover:bg-gray-600">
             🏠 Xem trang khách
           </a>
           <button

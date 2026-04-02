@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
+import { ADMIN_SITE_URL } from '../config/url';
 
 const HamburgerIcon = () => (
   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -180,7 +181,7 @@ const Header = () => {
                 <ActionButton icon={<UserIcon />} label={`Chào, ${userInfo.name}`} />
                 {userInfo.isAdmin ? (
                   <a
-                    href={process.env.VITE_ADMIN_URL || 'http://localhost:5174'}
+                    href={ADMIN_SITE_URL}
                     className="rounded-md bg-gray-800 px-3 py-1 text-xs font-medium text-white hover:bg-gray-700"
                   >
                     Trang Quản Trị
