@@ -2,12 +2,23 @@ import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { MainContent } from '../components/MainLayout';
 import { CartContext } from '../context/CartContext';
+import { API_BASE_URL } from '../config/url';
 
 // Chuyển chuỗi giá về số để tính tổng tiền.
 const parsePrice = (price) => Number((price || '').replace(/[^0-9]/g, ''));
 
 // Format tiền tệ theo chuẩn hiển thị VND.
 const formatCurrency = (amount) => `${amount.toLocaleString('vi-VN')}đ`;
+
+const getProductImageSrc = (item) => {
+  const productId = item._id || item.id || item.product;
+
+  if (productId) {
+    return `${API_BASE_URL}/api/products/${productId}/image`;
+  }
+
+  return item.image || 'https://placehold.co/300x300?text=Product';
+};
 
 // Trang giỏ hàng: cập nhật số lượng, xóa item và đi tới checkout.
 const CartPage = () => {
@@ -37,7 +48,16 @@ const CartPage = () => {
                     key={productId}
                     className="grid grid-cols-1 items-center gap-3 rounded-lg border border-gray-100 p-3 md:grid-cols-[96px_1fr_auto_auto]"
                   >
-                    <img src={item.image} alt={item.name} className="h-24 w-24 object-contain" />
+                    <img
+                      src={getProductImageSrc(item)}
+                      alt={item.name}
+                      className="h-24 w-24 object-contain"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src =
+                          item.image || 'https://placehold.co/300x300?text=Product';
+                      }}
+                    />
 
                     <div>
                       <h2 className="font-semibold text-gray-900">{item.name}</h2>

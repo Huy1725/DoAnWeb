@@ -2,11 +2,22 @@ import { useContext, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../config/url';
 
 // Chuyển chuỗi giá có ký tự tiền tệ về số để tính toán.
 const parsePrice = (price) => Number((price || '').replace(/[^0-9]/g, ''));
 // Format số tiền theo chuẩn hiển thị VND.
 const formatCurrency = (amount) => `${amount.toLocaleString('vi-VN')}đ`;
+
+const getProductImageSrc = (item) => {
+  const productId = item._id || item.id || item.product;
+
+  if (productId) {
+    return `${API_BASE_URL}/api/products/${productId}/image`;
+  }
+
+  return item.image || 'https://placehold.co/300x300?text=Product';
+};
 
 // Trang checkout: nhập thông tin nhận hàng và tạo đơn hàng.
 const CheckoutPage = () => {
@@ -179,7 +190,16 @@ const CheckoutPage = () => {
                   const productId = item._id || item.id;
                   return (
                     <div key={productId} className="flex items-center gap-3 rounded-lg bg-white p-2">
-                      <img src={item.image} alt={item.name} className="h-12 w-12 object-contain" />
+                      <img
+                        src={getProductImageSrc(item)}
+                        alt={item.name}
+                        className="h-12 w-12 object-contain"
+                        onError={(event) => {
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src =
+                            item.image || 'https://placehold.co/300x300?text=Product';
+                        }}
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
                         <p className="text-xs text-gray-500">SL: {item.quantity || 1}</p>
