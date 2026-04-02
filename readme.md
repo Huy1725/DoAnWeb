@@ -63,8 +63,8 @@ Tao file `frontend/.env` tu mau `frontend/.env.example`:
 
 ```env
 VITE_PORT=5173
-VITE_API_PROXY_TARGET=http://localhost:5000
-VITE_ADMIN_URL=http://localhost:5174
+VITE_API_PROXY_TARGET=https://cellphone-backend-3gmw.onrender.com/
+VITE_ADMIN_URL=https://cellphone-backend-3gmw.onrender.com/
 ```
 
 ### Admin
@@ -73,8 +73,8 @@ Tao file `admin/.env` tu mau `admin/.env.example`:
 
 ```env
 VITE_PORT=5174
-VITE_API_PROXY_TARGET=http://localhost:5000
-VITE_FRONTEND_URL=http://localhost:5173
+VITE_API_PROXY_TARGET=https://cellphone-backend-3gmw.onrender.com/
+VITE_FRONTEND_URL=https://cellphone-backend-3gmw.onrender.com/
 ```
 
 ## 6. Chay du an
@@ -95,9 +95,9 @@ npm run dev:admin
 
 Mac dinh truy cap:
 
-- Frontend: http://localhost:5173
-- Admin: http://localhost:5174
-- Backend API: http://localhost:5000
+- Frontend: https://cellphone-backend-3gmw.onrender.com/
+- Admin: https://cellphone-backend-3gmw.onrender.com/
+- Backend API: https://cellphone-backend-3gmw.onrender.com/
 
 ## 7. Build
 
