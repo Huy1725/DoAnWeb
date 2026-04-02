@@ -8,6 +8,7 @@ const orderRoutes = require('./routes/order.routes');
 const authRoutes = require('./routes/auth.routes');
 const categoryRoutes = require('./routes/category.routes');
 const userRoutes = require('./routes/user.routes');
+const bannerRoutes = require('./routes/banner.routes');
 const Category = require('./models/category.model');
 
 const app = express();
@@ -20,6 +21,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/banners', bannerRoutes);
 
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/doanweb';

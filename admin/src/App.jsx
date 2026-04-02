@@ -7,6 +7,7 @@ import AdminProductsPage from './pages/AdminProductsPage';
 import ProductEditPage from './pages/ProductEditPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminBannersPage from './pages/AdminBannersPage';
 
 // Admin app chỉ tập trung route quản trị và login.
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route index element={<AdminProductsPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="products" element={<AdminProductsPage />} />
+        <Route path="banners" element={<AdminBannersPage />} />
         <Route path="product/:id/edit" element={<ProductEditPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="users" element={<AdminUsersPage />} />

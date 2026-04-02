@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../config/url';
 
 const ChevronRight = () => (
   <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -15,12 +16,12 @@ const ItemIcon = () => (
 
 const menuItems = ['Điện thoại', 'Laptop', 'Tablet'];
 
-const mainBanner = 'https://placehold.co/1200x560/d70018/ffffff?text=CELLPHONES+MEGA+SALE';
-const sideBanners = [
-  'https://placehold.co/600x180/111827/ffffff?text=iPhone+17+Series',
-  'https://placehold.co/600x180/0f766e/ffffff?text=MacBook+Air+M5',
-  'https://placehold.co/600x180/1d4ed8/ffffff?text=Accessory+Deals',
-];
+const defaultBannerImages = {
+  main: 'https://placehold.co/1200x560/d70018/ffffff?text=CELLPHONES+MEGA+SALE',
+  side1: 'https://placehold.co/600x180/111827/ffffff?text=iPhone+17+Series',
+  side2: 'https://placehold.co/600x180/0f766e/ffffff?text=MacBook+Air+M5',
+  side3: 'https://placehold.co/600x180/1d4ed8/ffffff?text=Accessory+Deals',
+};
 
 // Chuẩn hóa text để map tên danh mục có/không dấu.
 const normalizeText = (value = '') =>
@@ -35,6 +36,44 @@ const normalizeText = (value = '') =>
   // Hero section gồm menu danh mục + main banner + 3 side banners.
 const HeroSection = () => {
   const [categories, setCategories] = useState([]);
+  const [bannerImages, setBannerImages] = useState(defaultBannerImages);
+
+  useEffect(() => {
+    // Tải cấu hình banner động từ backend để hiển thị đúng ảnh đã upload.
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch('/api/banners');
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data)) {
+          return;
+        }
+
+        const nextBannerImages = { ...defaultBannerImages };
+
+        data.forEach((banner) => {
+          if (!banner?.position || !banner?.imageUrl || !nextBannerImages[banner.position]) {
+            return;
+          }
+
+          nextBannerImages[banner.position] = banner.imageUrl.startsWith('/api/')
+            ? `${API_BASE_URL}${banner.imageUrl}`
+            : banner.imageUrl;
+        });
+
+        setBannerImages(nextBannerImages);
+      } catch (_error) {
+        setBannerImages(defaultBannerImages);
+      }
+    };
+
+    fetchBanners();
+  }, []);
 
   useEffect(() => {
     // Tải danh mục để tạo link nhanh ở cột trái.
@@ -66,6 +105,8 @@ const HeroSection = () => {
 
     return map;
   }, [categories]);
+
+  const sideBanners = [bannerImages.side1, bannerImages.side2, bannerImages.side3];
 
   return (
     <section className="grid grid-cols-12 gap-4 max-w-7xl mx-auto mt-4">
@@ -100,7 +141,7 @@ const HeroSection = () => {
 
       <div className="col-span-12 md:col-span-6 lg:col-span-7">
         <img
-          src={mainBanner}
+          src={bannerImages.main}
           alt="Main banner"
           className="h-full w-full rounded-lg object-cover object-center"
         />
@@ -109,7 +150,7 @@ const HeroSection = () => {
       <div className="col-span-12 md:col-span-3 lg:col-span-3 space-y-4">
         {sideBanners.map((banner, index) => (
           <img
-            key={banner}
+            key={`${banner}-${index}`}
             src={banner}
             alt={`Side banner ${index + 1}`}
             className="w-full rounded-lg object-cover"
