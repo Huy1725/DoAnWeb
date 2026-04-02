@@ -4,11 +4,23 @@ const CartContext = createContext();
 
 const CART_STORAGE_KEY = 'cartItems';
 
+const parseStoredJson = (storedValue, fallbackValue) => {
+  if (!storedValue) {
+    return fallbackValue;
+  }
+
+  try {
+    return JSON.parse(storedValue);
+  } catch (_error) {
+    return fallbackValue;
+  }
+};
+
 const CartProvider = ({ children }) => {
   // Khởi tạo giỏ hàng từ localStorage để giữ dữ liệu sau khi reload.
   const [cartItems, setCartItems] = useState(() => {
     const storedItems = localStorage.getItem(CART_STORAGE_KEY);
-    return storedItems ? JSON.parse(storedItems) : [];
+    return parseStoredJson(storedItems, []);
   });
 
   // Đồng bộ giỏ hàng hiện tại vào localStorage mỗi khi có thay đổi.

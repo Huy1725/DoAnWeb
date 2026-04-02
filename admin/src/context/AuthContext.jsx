@@ -4,11 +4,23 @@ const AuthContext = createContext();
 
 const AUTH_STORAGE_KEY = 'userInfo';
 
+const parseStoredJson = (storedValue, fallbackValue) => {
+  if (!storedValue) {
+    return fallbackValue;
+  }
+
+  try {
+    return JSON.parse(storedValue);
+  } catch (_error) {
+    return fallbackValue;
+  }
+};
+
 const AuthProvider = ({ children }) => {
   // Khởi tạo trạng thái đăng nhập từ localStorage để giữ phiên.
   const [userInfo, setUserInfo] = useState(() => {
     const storedValue = localStorage.getItem(AUTH_STORAGE_KEY);
-    return storedValue ? JSON.parse(storedValue) : null;
+    return parseStoredJson(storedValue, null);
   });
 
   // Gọi API đăng nhập, lưu user + token vào state và localStorage.
