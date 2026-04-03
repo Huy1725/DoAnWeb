@@ -3,14 +3,18 @@ import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../config/url';
 
 const bannerSlots = [
-  { position: 'main', label: 'Banner chính', recommendedSize: '1200 x 560' },
+  { position: 'main1', label: 'Banner chính 1', recommendedSize: '1200 x 560' },
+  { position: 'main2', label: 'Banner chính 2', recommendedSize: '1200 x 560' },
+  { position: 'main3', label: 'Banner chính 3', recommendedSize: '1200 x 560' },
   { position: 'side1', label: 'Banner phụ 1', recommendedSize: '600 x 180' },
   { position: 'side2', label: 'Banner phụ 2', recommendedSize: '600 x 180' },
   { position: 'side3', label: 'Banner phụ 3', recommendedSize: '600 x 180' },
 ];
 
 const defaultBannerImages = {
-  main: 'https://placehold.co/1200x560/d70018/ffffff?text=CELLPHONES+MEGA+SALE',
+  main1: 'https://placehold.co/1200x560/111827/ffffff?text=Main+Banner+1',
+  main2: 'https://placehold.co/1200x560/1f2937/ffffff?text=Main+Banner+2',
+  main3: 'https://placehold.co/1200x560/374151/ffffff?text=Main+Banner+3',
   side1: 'https://placehold.co/600x180/111827/ffffff?text=iPhone+17+Series',
   side2: 'https://placehold.co/600x180/0f766e/ffffff?text=MacBook+Air+M5',
   side3: 'https://placehold.co/600x180/1d4ed8/ffffff?text=Accessory+Deals',
@@ -132,7 +136,7 @@ const AdminBannersPage = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý Banner Trang Chủ</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Bạn có thể thêm mới hoặc thay thế ảnh banner chính và 3 banner phụ.
+          Bạn có thể thêm mới hoặc thay thế 3 ảnh banner chính và 3 banner phụ.
         </p>
       </div>
 

@@ -17,7 +17,9 @@ const ItemIcon = () => (
 const menuItems = ['Điện thoại', 'Laptop', 'Tablet'];
 
 const defaultBannerImages = {
-  main: 'https://placehold.co/1200x560/d70018/ffffff?text=CELLPHONES+MEGA+SALE',
+  main1: 'https://placehold.co/1200x560/111827/ffffff?text=Main+Banner+1',
+  main2: 'https://placehold.co/1200x560/1f2937/ffffff?text=Main+Banner+2',
+  main3: 'https://placehold.co/1200x560/374151/ffffff?text=Main+Banner+3',
   side1: 'https://placehold.co/600x180/111827/ffffff?text=iPhone+17+Series',
   side2: 'https://placehold.co/600x180/0f766e/ffffff?text=MacBook+Air+M5',
   side3: 'https://placehold.co/600x180/1d4ed8/ffffff?text=Accessory+Deals',
@@ -37,6 +39,7 @@ const normalizeText = (value = '') =>
 const HeroSection = () => {
   const [categories, setCategories] = useState([]);
   const [bannerImages, setBannerImages] = useState(defaultBannerImages);
+  const [currentMainBannerIndex, setCurrentMainBannerIndex] = useState(0);
 
   useEffect(() => {
     // Tải cấu hình banner động từ backend để hiển thị đúng ảnh đã upload.
@@ -106,6 +109,33 @@ const HeroSection = () => {
     return map;
   }, [categories]);
 
+  const mainBanners = useMemo(
+    () => [bannerImages.main1, bannerImages.main2, bannerImages.main3],
+    [bannerImages.main1, bannerImages.main2, bannerImages.main3]
+  );
+
+  useEffect(() => {
+    setCurrentMainBannerIndex(0);
+  }, [mainBanners]);
+
+  useEffect(() => {
+    const autoSlideTimer = setInterval(() => {
+      setCurrentMainBannerIndex((prevIndex) => (prevIndex + 1) % mainBanners.length);
+    }, 3500);
+
+    return () => clearInterval(autoSlideTimer);
+  }, [mainBanners]);
+
+  const handlePrevMainBanner = () => {
+    setCurrentMainBannerIndex((prevIndex) =>
+      prevIndex === 0 ? mainBanners.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNextMainBanner = () => {
+    setCurrentMainBannerIndex((prevIndex) => (prevIndex + 1) % mainBanners.length);
+  };
+
   const sideBanners = [bannerImages.side1, bannerImages.side2, bannerImages.side3];
 
   return (
@@ -140,11 +170,52 @@ const HeroSection = () => {
       </aside>
 
       <div className="col-span-12 md:col-span-6 lg:col-span-7">
-        <img
-          src={bannerImages.main}
-          alt="Main banner"
-          className="h-full w-full rounded-lg object-cover object-center"
-        />
+        <div className="relative overflow-hidden rounded-lg">
+          <div
+            className="flex transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentMainBannerIndex * 100}%)` }}
+          >
+            {mainBanners.map((banner, index) => (
+              <img
+                key={`${banner}-${index}`}
+                src={banner}
+                alt={`Main banner ${index + 1}`}
+                className="h-[220px] w-full shrink-0 object-cover object-center md:h-[320px]"
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handlePrevMainBanner}
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/35 px-3 py-2 text-xl text-white"
+            aria-label="Banner trước"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={handleNextMainBanner}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/35 px-3 py-2 text-xl text-white"
+            aria-label="Banner tiếp theo"
+          >
+            ›
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/25 px-2 py-1">
+            {mainBanners.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setCurrentMainBannerIndex(index)}
+                className={`h-2.5 w-2.5 rounded-full ${
+                  index === currentMainBannerIndex ? 'bg-white' : 'bg-white/50'
+                }`}
+                aria-label={`Chuyển tới banner ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="col-span-12 md:col-span-3 lg:col-span-3 space-y-4">

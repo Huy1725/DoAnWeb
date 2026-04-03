@@ -2,9 +2,19 @@ const Banner = require('../models/banner.model');
 
 const BANNER_SLOTS = [
   {
-    position: 'main',
-    label: 'Banner chính',
-    fallbackImageUrl: 'https://placehold.co/1200x560/d70018/ffffff?text=CELLPHONES+MEGA+SALE',
+    position: 'main1',
+    label: 'Banner chính 1',
+    fallbackImageUrl: 'https://placehold.co/1200x560/111827/ffffff?text=Main+Banner+1',
+  },
+  {
+    position: 'main2',
+    label: 'Banner chính 2',
+    fallbackImageUrl: 'https://placehold.co/1200x560/1f2937/ffffff?text=Main+Banner+2',
+  },
+  {
+    position: 'main3',
+    label: 'Banner chính 3',
+    fallbackImageUrl: 'https://placehold.co/1200x560/374151/ffffff?text=Main+Banner+3',
   },
   {
     position: 'side1',

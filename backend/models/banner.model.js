@@ -6,7 +6,7 @@ const bannerSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      enum: ['main', 'side1', 'side2', 'side3'],
+      enum: ['main1', 'main2', 'main3', 'side1', 'side2', 'side3'],
     },
     imageData: {
       type: Buffer,
