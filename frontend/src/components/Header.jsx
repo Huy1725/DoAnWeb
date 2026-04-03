@@ -17,13 +17,6 @@ const SearchIcon = () => (
   </svg>
 );
 
-const ClipboardIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="8" y="3" width="8" height="4" rx="1" />
-    <path d="M6 7h12v14H6z" />
-  </svg>
-);
-
 const CartIcon = () => (
   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="9" cy="20" r="1" />
@@ -127,16 +120,6 @@ const Header = () => {
     setIsCategoryMenuOpen((prev) => !prev);
   };
 
-  // Điều hướng đến trang tra cứu đơn hàng của user.
-  const handleLookupOrders = () => {
-    if (!userInfo?.token) {
-      navigate('/login');
-      return;
-    }
-
-    navigate('/my-orders');
-  };
-
   return (
     <header className="sticky top-0 z-50 bg-[#d70018] shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-2 gap-2">
@@ -170,12 +153,11 @@ const Header = () => {
         </div>
 
         <div className="hidden lg:flex items-center gap-3">
-          <ActionButton icon={<ClipboardIcon />} label="Tra cứu đơn hàng" onClick={handleLookupOrders} />
           <ActionButton icon={<CartIcon />} label="Giỏ hàng" badge={cartCount} onClick={() => navigate('/cart')} />
           {userInfo ? (
             <>
               <Link to="/my-orders" className="text-xs font-medium text-white hover:opacity-90">
-                Đơn hàng của tôi
+                Hồ sơ & đơn hàng
               </Link>
               <div className="flex items-center space-x-3">
                 <ActionButton icon={<UserIcon />} label={`Chào, ${userInfo.name}`} />

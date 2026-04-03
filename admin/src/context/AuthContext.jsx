@@ -23,14 +23,14 @@ const AuthProvider = ({ children }) => {
     return parseStoredJson(storedValue, null);
   });
 
-  // Gọi API đăng nhập, lưu user + token vào state và localStorage.
-  const login = async (email, password) => {
+  // Gọi API đăng nhập bằng tên đăng nhập/email, lưu user + token vào state và localStorage.
+  const login = async (identifier, password) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
 
     if (!response.ok) {

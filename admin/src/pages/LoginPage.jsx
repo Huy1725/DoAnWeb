@@ -6,7 +6,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,7 +17,7 @@ const LoginPage = () => {
     try {
       setIsSubmitting(true);
       setError(null);
-      await login(email, password);
+      await login(identifier, password);
       navigate('/');
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại');
@@ -35,10 +35,10 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
+            type="text"
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
+            placeholder="Tên đăng nhập hoặc email"
             required
             className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-red-600"
           />

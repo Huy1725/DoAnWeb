@@ -9,6 +9,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MyOrdersPage from './pages/MyOrdersPage';
 import RegisterPage from './pages/RegisterPage';
 import CategoryProductsPage from './pages/CategoryProductsPage';
+import ShippingPolicyPage from './pages/ShippingPolicyPage';
+import ReturnPolicyPage from './pages/ReturnPolicyPage';
+import WarrantyPolicyPage from './pages/WarrantyPolicyPage';
+import CareersPage from './pages/CareersPage';
+import ContactPage from './pages/ContactPage';
+import StoreLocationsPage from './pages/StoreLocationsPage';
 
 // Frontend app chỉ chứa route khách hàng.
 function App() {
@@ -29,6 +35,12 @@ function App() {
         />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+        <Route path="/return-policy" element={<ReturnPolicyPage />} />
+        <Route path="/warranty-policy" element={<WarrantyPolicyPage />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/store-locations" element={<StoreLocationsPage />} />
         <Route
           path="/my-orders"
           element={

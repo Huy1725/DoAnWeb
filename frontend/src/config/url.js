@@ -1,5 +1,21 @@
 const normalizeUrl = (url) => (url.endsWith('/') ? url.slice(0, -1) : url);
 
+const resolveApiBaseUrl = () => {
+	if (import.meta.env.VITE_API_URL) {
+		return import.meta.env.VITE_API_URL;
+	}
+
+	if (typeof window !== 'undefined') {
+		const hostName = window.location.hostname;
+
+		if (hostName === 'localhost' || hostName === '127.0.0.1') {
+			return 'http://localhost:5000';
+		}
+	}
+
+	return 'https://cellphone-backend-3gmw.onrender.com/';
+};
+
 const resolveAdminSiteUrl = () => {
 	if (import.meta.env.VITE_ADMIN_URL) {
 		return import.meta.env.VITE_ADMIN_URL;
@@ -16,5 +32,5 @@ const resolveAdminSiteUrl = () => {
 	return 'http://localhost:5174';
 };
 
-export const API_BASE_URL = normalizeUrl(import.meta.env.VITE_API_URL || 'https://cellphone-backend-3gmw.onrender.com/');
+export const API_BASE_URL = normalizeUrl(resolveApiBaseUrl());
 export const ADMIN_SITE_URL = normalizeUrl(resolveAdminSiteUrl());

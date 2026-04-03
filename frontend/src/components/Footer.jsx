@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const socialLinks = [
   { name: 'Facebook', symbol: 'f' },
   { name: 'YouTube', symbol: '▶' },
@@ -25,16 +27,40 @@ const Footer = () => {
 
         <div className="space-y-2 text-sm text-gray-700">
           <h3 className="text-base font-bold text-gray-900">Chính sách</h3>
-          <p>Chính sách giao hàng</p>
-          <p>Chính sách đổi trả</p>
-          <p>Chính sách bảo hành</p>
+          <p>
+            <Link to="/shipping-policy" className="hover:text-[#d70018]">
+              Chính sách giao hàng
+            </Link>
+          </p>
+          <p>
+            <Link to="/return-policy" className="hover:text-[#d70018]">
+              Chính sách đổi trả
+            </Link>
+          </p>
+          <p>
+            <Link to="/warranty-policy" className="hover:text-[#d70018]">
+              Chính sách bảo hành
+            </Link>
+          </p>
         </div>
 
         <div className="space-y-2 text-sm text-gray-700">
           <h3 className="text-base font-bold text-gray-900">Về chúng tôi</h3>
-          <p>Tuyển dụng</p>
-          <p>Liên hệ</p>
-          <p>Hệ thống cửa hàng</p>
+          <p>
+            <Link to="/careers" className="hover:text-[#d70018]">
+              Tuyển dụng
+            </Link>
+          </p>
+          <p>
+            <Link to="/contact" className="hover:text-[#d70018]">
+              Liên hệ
+            </Link>
+          </p>
+          <p>
+            <Link to="/store-locations" className="hover:text-[#d70018]">
+              Hệ thống cửa hàng
+            </Link>
+          </p>
         </div>
 
         <div className="space-y-3 text-sm text-gray-700">

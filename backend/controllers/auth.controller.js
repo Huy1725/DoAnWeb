@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/user.model');
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // Tạo JWT dùng cho đăng nhập/đăng ký thành công.
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -42,21 +44,31 @@ const registerUser = async (req, res) => {
   }
 };
 
-// Đăng nhập bằng email/mật khẩu và trả về thông tin user + token.
+// Đăng nhập bằng email hoặc tên đăng nhập và trả về thông tin user + token.
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const normalizedIdentifier = String(identifier || email || '').trim();
+
+    if (!normalizedIdentifier || !password) {
+      return res.status(400).json({ message: 'Vui lòng nhập tên đăng nhập/email và mật khẩu' });
+    }
+
+    const identifierRegex = new RegExp(`^${escapeRegex(normalizedIdentifier)}$`, 'i');
+
+    const user = await User.findOne({
+      $or: [{ email: normalizedIdentifier.toLowerCase() }, { name: identifierRegex }],
+    });
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Sai tên đăng nhập/email hoặc mật khẩu' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Sai tên đăng nhập/email hoặc mật khẩu' });
     }
 
     return res.status(200).json({

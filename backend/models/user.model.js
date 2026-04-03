@@ -22,6 +22,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    avatarData: {
+      type: Buffer,
+    },
+    avatarContentType: {
+      type: String,
+    },
   },
   {
     timestamps: true,
