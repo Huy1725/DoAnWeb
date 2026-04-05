@@ -120,7 +120,12 @@ const importData = async () => {
     await User.deleteMany();
     await Product.deleteMany();
     await User.insertMany(adminUser);
-    await Product.insertMany(mockProducts);
+    const seededProducts = mockProducts.map((product) => ({
+      ...product,
+      stock: product.stock ?? 20,
+    }));
+
+    await Product.insertMany(seededProducts);
 
     console.log('Admin User & Data Imported!');
     process.exit();

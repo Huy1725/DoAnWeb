@@ -16,6 +16,26 @@ const parseStoredJson = (storedValue, fallbackValue) => {
   }
 };
 
+const getNormalizedStock = (item) => {
+  const parsedStock = Number(item?.stock);
+
+  if (!Number.isFinite(parsedStock)) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor(parsedStock));
+};
+
+const clampQuantityByStock = (item, quantity) => {
+  const stock = getNormalizedStock(item);
+
+  if (stock === null) {
+    return quantity;
+  }
+
+  return Math.min(quantity, stock);
+};
+
 const CartProvider = ({ children }) => {
   // Khởi tạo giỏ hàng từ localStorage để giữ dữ liệu sau khi reload.
   const [cartItems, setCartItems] = useState(() => {
@@ -33,14 +53,44 @@ const CartProvider = ({ children }) => {
     setCartItems((prevItems) => {
       const productId = product._id || product.id;
       const existingItem = prevItems.find((item) => (item._id || item.id) === productId);
+      const currentStock = getNormalizedStock(product);
+
+      if (currentStock !== null && currentStock <= 0) {
+        return prevItems;
+      }
 
       if (existingItem) {
+        const mergedItem = {
+          ...existingItem,
+          ...product,
+        };
+        const nextQuantity = clampQuantityByStock(
+          mergedItem,
+          (Number(existingItem.quantity) || 1) + 1
+        );
+
         return prevItems.map((item) =>
-          (item._id || item.id) === productId ? { ...item, quantity: item.quantity + 1 } : item
+          (item._id || item.id) === productId
+            ? {
+                ...item,
+                ...product,
+                quantity: nextQuantity,
+              }
+            : item
         );
       }
 
-      return [...prevItems, { ...product, quantity: 1 }];
+      const itemToAdd = {
+        ...product,
+        quantity: 1,
+      };
+      const normalizedQuantity = clampQuantityByStock(itemToAdd, 1);
+
+      if (normalizedQuantity <= 0) {
+        return prevItems;
+      }
+
+      return [...prevItems, { ...itemToAdd, quantity: normalizedQuantity }];
     });
   };
 
@@ -53,15 +103,29 @@ const CartProvider = ({ children }) => {
   const updateQuantity = (productId, qty) => {
     const normalizedQty = Number(qty);
 
-    if (normalizedQty <= 0) {
-      removeFromCart(productId);
+    if (!Number.isFinite(normalizedQty)) {
       return;
     }
 
     setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        (item._id || item.id) === productId ? { ...item, quantity: normalizedQty } : item
-      )
+      prevItems
+        .map((item) => {
+          if ((item._id || item.id) !== productId) {
+            return item;
+          }
+
+          const limitedQuantity = clampQuantityByStock(item, normalizedQty);
+
+          if (limitedQuantity <= 0) {
+            return null;
+          }
+
+          return {
+            ...item,
+            quantity: limitedQuantity,
+          };
+        })
+        .filter(Boolean)
     );
   };
 

@@ -6,6 +6,7 @@ const {
 	getOrderById,
 	getMyOrders,
 	getMyOrderById,
+	getAdminReportSummary,
 	updateOrderStatus,
 	updateOrder,
 	deleteOrder,
@@ -20,6 +21,8 @@ router.get('/', protect, admin, getOrders);
 router.get('/myorders', protect, getMyOrders);
 // Lấy chi tiết đơn của user hiện tại.
 router.get('/myorders/:id', protect, getMyOrderById);
+// Lấy dữ liệu báo cáo tổng hợp (admin).
+router.get('/report/summary', protect, admin, getAdminReportSummary);
 // Lấy chi tiết đơn theo id (admin).
 router.get('/:id', protect, admin, getOrderById);
 // Cập nhật trạng thái đơn hàng (admin).

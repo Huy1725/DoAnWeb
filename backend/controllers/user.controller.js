@@ -1,6 +1,9 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const Order = require('../models/order.model');
+const UserVoucher = require('../models/userVoucher.model');
+const Notification = require('../models/notification.model');
+const { resolveMembershipTierBySpent } = require('../services/membership.service');
 
 const AVATAR_PLACEHOLDER_URL =
   'https://placehold.co/160x160/e5e7eb/6b7280?text=Avatar';
@@ -11,6 +14,19 @@ const buildAvatarUrl = (user) => {
   }
 
   return `/api/users/${user._id}/avatar`;
+};
+
+const normalizeVoucherStatus = (value = '') => {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = String(value).trim().toLowerCase();
+  if (['available', 'used', 'expired'].includes(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  return null;
 };
 
 // Tạo user mới từ trang quản trị.
@@ -42,6 +58,7 @@ const createUser = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      membershipTier: user.membershipTier,
     });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to create user', error: error.message });
@@ -115,10 +132,24 @@ const getMyProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).lean();
+    const [orders, vouchers, latestNotifications, unreadNotificationCount] = await Promise.all([
+      Order.find({ user: req.user._id }).sort({ createdAt: -1 }).lean(),
+      UserVoucher.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50).lean(),
+      Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(10).lean(),
+      Notification.countDocuments({ user: req.user._id, isRead: false }),
+    ]);
 
     const totalOrders = orders.length;
-    const totalSpent = orders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0);
+    const totalSpent = orders
+      .filter((order) => String(order.status || '').toLowerCase() !== 'cancelled')
+      .reduce((sum, order) => sum + Number(order.totalPrice || 0), 0);
+
+    const resolvedTier = resolveMembershipTierBySpent(totalSpent).code;
+
+    if (user.membershipTier !== resolvedTier) {
+      user.membershipTier = resolvedTier;
+      await user.save();
+    }
 
     return res.status(200).json({
       user: {
@@ -126,6 +157,7 @@ const getMyProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        membershipTier: user.membershipTier,
         createdAt: user.createdAt,
         avatarUrl: buildAvatarUrl(user),
       },
@@ -134,9 +166,72 @@ const getMyProfile = async (req, res) => {
         totalSpent,
       },
       orders,
+      vouchers,
+      notifications: latestNotifications,
+      unreadNotificationCount,
     });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to fetch profile', error: error.message });
+  }
+};
+
+// Lay thong bao cua user hien tai.
+const getMyNotifications = async (req, res) => {
+  try {
+    const requestedLimit = Math.floor(Number(req.query.limit || 20));
+    const safeLimit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 50)
+      : 20;
+
+    const [notifications, unreadNotificationCount] = await Promise.all([
+      Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(safeLimit).lean(),
+      Notification.countDocuments({ user: req.user._id, isRead: false }),
+    ]);
+
+    return res.status(200).json({
+      notifications,
+      unreadNotificationCount,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Failed to fetch notifications', error: error.message });
+  }
+};
+
+// Danh dau toan bo thong bao la da doc.
+const markMyNotificationsRead = async (req, res) => {
+  try {
+    const updateResult = await Notification.updateMany(
+      { user: req.user._id, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    return res.status(200).json({
+      message: 'Notifications updated',
+      updatedCount: updateResult.modifiedCount || 0,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Failed to update notifications', error: error.message });
+  }
+};
+
+// Lay danh sach voucher cua user hien tai.
+const getMyVouchers = async (req, res) => {
+  try {
+    const statusFilter = normalizeVoucherStatus(req.query.status);
+    const query = { user: req.user._id };
+
+    if (statusFilter) {
+      query.status = statusFilter;
+    }
+
+    const vouchers = await UserVoucher.find(query).sort({ createdAt: -1 }).lean();
+    return res.status(200).json(vouchers);
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to fetch vouchers', error: error.message });
   }
 };
 
@@ -188,6 +283,9 @@ module.exports = {
   deleteUser,
   updateUserRole,
   getMyProfile,
+  getMyNotifications,
+  markMyNotificationsRead,
+  getMyVouchers,
   updateMyAvatar,
   getUserAvatar,
 };

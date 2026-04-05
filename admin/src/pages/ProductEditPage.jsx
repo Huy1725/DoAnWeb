@@ -98,6 +98,7 @@ const ProductEditPage = () => {
     originalPrice: '',
     discountBadge: '',
     rating: 0,
+    stock: 20,
     promoText: '',
     productInfo: '',
     variants: createDefaultVariants(),
@@ -127,6 +128,7 @@ const ProductEditPage = () => {
           originalPrice: data.originalPrice || '',
           discountBadge: data.discountBadge || '',
           rating: data.rating || 0,
+          stock: Number(data.stock ?? 20),
           promoText: data.promoText || '',
           productInfo: data.productInfo || '',
           variants: buildVariantsState(
@@ -177,7 +179,7 @@ const ProductEditPage = () => {
     const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'rating' ? Number(value) : value,
+      [name]: name === 'rating' || name === 'stock' ? Number(value) : value,
     }));
   };
 
@@ -240,6 +242,7 @@ const ProductEditPage = () => {
       submitFormData.append('originalPrice', formData.originalPrice);
       submitFormData.append('discountBadge', formData.discountBadge);
       submitFormData.append('rating', String(formData.rating));
+      submitFormData.append('stock', String(formData.stock));
       submitFormData.append('promoText', formData.promoText);
       submitFormData.append('productInfo', formData.productInfo || '');
       submitFormData.append('category', selectedCategory);
@@ -361,6 +364,20 @@ const ProductEditPage = () => {
             value={formData.rating}
             onChange={handleInputChange}
             placeholder="Nhập điểm đánh giá"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Số lượng tồn kho</label>
+          <input
+            type="number"
+            min="0"
+            name="stock"
+            value={formData.stock}
+            onChange={handleInputChange}
+            placeholder="Nhập số lượng tồn kho"
             className="w-full rounded-lg border border-gray-300 px-4 py-3"
             required
           />

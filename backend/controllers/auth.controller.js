@@ -34,6 +34,7 @@ const registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      membershipTier: user.membershipTier,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -76,6 +77,7 @@ const loginUser = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      membershipTier: user.membershipTier,
       token: generateToken(user._id),
     });
   } catch (error) {

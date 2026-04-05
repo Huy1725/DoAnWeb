@@ -18,6 +18,21 @@ const parseJsonIfString = (value, fallback) => {
   return value;
 };
 
+// Chuẩn hóa số lượng tồn kho, trả về null nếu không hợp lệ.
+const parseStockValue = (value, fallbackValue = 20) => {
+  if (value === undefined || value === null || value === '') {
+    return fallbackValue;
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    return null;
+  }
+
+  return Math.floor(parsedValue);
+};
+
 // Lấy danh sách sản phẩm theo bộ lọc từ khóa và danh mục.
 const getProducts = async (req, res) => {
   try {
@@ -86,7 +101,14 @@ const createProduct = async (req, res) => {
       specifications,
       variants,
       category,
+      stock,
     } = req.body;
+
+    const parsedStock = parseStockValue(stock, 20);
+
+    if (parsedStock === null) {
+      return res.status(400).json({ message: 'Số lượng tồn kho không hợp lệ' });
+    }
 
     const parsedVariants = parseJsonIfString(variants, []);
     const parsedSpecifications = parseJsonIfString(specifications, []);
@@ -103,6 +125,7 @@ const createProduct = async (req, res) => {
       specifications: Array.isArray(parsedSpecifications) ? parsedSpecifications : [],
       variants: Array.isArray(parsedVariants) ? parsedVariants : [],
       category: selectedCategory,
+      stock: parsedStock,
     };
 
     if (createPayload.variants.length > 0 && !name) {
@@ -159,6 +182,16 @@ const updateProduct = async (req, res) => {
     product.promoText = req.body.promoText ?? product.promoText;
     product.productInfo = req.body.productInfo ?? product.productInfo;
     product.category = req.body.category ?? product.category;
+
+    if (req.body.stock !== undefined) {
+      const parsedStock = parseStockValue(req.body.stock, product.stock);
+
+      if (parsedStock === null) {
+        return res.status(400).json({ message: 'Số lượng tồn kho không hợp lệ' });
+      }
+
+      product.stock = parsedStock;
+    }
 
     const parsedSpecifications = parseJsonIfString(req.body.specifications, undefined);
     if (Array.isArray(parsedSpecifications)) {

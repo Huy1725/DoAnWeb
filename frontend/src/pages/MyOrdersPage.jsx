@@ -11,6 +11,11 @@ const formatDate = (value) => {
   return new Date(value).toLocaleDateString('vi-VN');
 };
 
+const formatDateTime = (value) => {
+  if (!value) return '--';
+  return new Date(value).toLocaleString('vi-VN');
+};
+
 const defaultAvatarUrl = 'https://placehold.co/160x160/e5e7eb/6b7280?text=Avatar';
 
 const membershipTiers = [
@@ -84,6 +89,25 @@ const getTierIndexByTotalSpent = (totalSpent) => {
   return foundIndex >= 0 ? foundIndex : membershipTiers.length - 1;
 };
 
+const getTierIndexByCode = (tierCode) => {
+  const foundIndex = membershipTiers.findIndex((tier) => tier.code === tierCode);
+  return foundIndex >= 0 ? foundIndex : 0;
+};
+
+const formatVoucherValue = (voucher) => {
+  if (!voucher) {
+    return '--';
+  }
+
+  if (voucher.discountType === 'fixed') {
+    return `Giam ${formatCurrency(voucher.discountValue || 0)}`;
+  }
+
+  return `Giam ${voucher.discountValue || 0}% (toi da ${formatCurrency(
+    voucher.maxDiscountAmount || 0
+  )})`;
+};
+
 const getOrderItemImage = (item) => {
   const productId = typeof item.product === 'object' ? item.product?._id : item.product;
 
@@ -107,9 +131,20 @@ const MyOrdersPage = () => {
 
   const totalOrders = Number(profile?.stats?.totalOrders || 0);
   const totalSpent = Number(profile?.stats?.totalSpent || 0);
-  const currentTierIndex = useMemo(() => getTierIndexByTotalSpent(totalSpent), [totalSpent]);
+  const currentTierIndex = useMemo(() => {
+    const tierCode = profile?.user?.membershipTier;
+
+    if (tierCode) {
+      return getTierIndexByCode(tierCode);
+    }
+
+    return getTierIndexByTotalSpent(totalSpent);
+  }, [profile?.user?.membershipTier, totalSpent]);
   const activeTier = membershipTiers[activeTierIndex] || membershipTiers[0];
   const orders = Array.isArray(profile?.orders) ? profile.orders : [];
+  const vouchers = Array.isArray(profile?.vouchers) ? profile.vouchers : [];
+  const notifications = Array.isArray(profile?.notifications) ? profile.notifications : [];
+  const unreadNotificationCount = Number(profile?.unreadNotificationCount || 0);
 
   const visibleTierIndexes = useMemo(() => {
     const total = membershipTiers.length;
@@ -131,7 +166,9 @@ const MyOrdersPage = () => {
 
   const applyProfileState = (data) => {
     setProfile(data);
-    const tierIndex = getTierIndexByTotalSpent(data?.stats?.totalSpent || 0);
+    const tierIndex = data?.user?.membershipTier
+      ? getTierIndexByCode(data.user.membershipTier)
+      : getTierIndexByTotalSpent(data?.stats?.totalSpent || 0);
     setActiveTierIndex(tierIndex);
   };
 
@@ -152,6 +189,8 @@ const MyOrdersPage = () => {
       (sum, order) => sum + Number(order?.totalPrice || 0),
       0
     );
+    const fallbackTierCode =
+      membershipTiers[getTierIndexByTotalSpent(totalSpentValue)]?.code || membershipTiers[0].code;
 
     applyProfileState({
       user: {
@@ -159,6 +198,7 @@ const MyOrdersPage = () => {
         name: userInfo.name,
         email: userInfo.email,
         isAdmin: userInfo.isAdmin,
+        membershipTier: fallbackTierCode,
         avatarUrl: userInfo.avatarUrl || null,
         createdAt: userInfo.createdAt || null,
       },
@@ -167,6 +207,9 @@ const MyOrdersPage = () => {
         totalSpent: totalSpentValue,
       },
       orders: normalizedOrders,
+      vouchers: [],
+      notifications: [],
+      unreadNotificationCount: 0,
     });
   };
 
@@ -445,6 +488,79 @@ const MyOrdersPage = () => {
             </div>
           </section>
 
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <article className="rounded-xl border border-gray-200 bg-white p-4 md:p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Thong bao gan day</h2>
+                <span className="rounded-full bg-[#d70018] px-3 py-1 text-xs font-semibold text-white">
+                  Chua doc: {unreadNotificationCount}
+                </span>
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                  Ban chua co thong bao nao.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification._id}
+                      className={`rounded-lg border px-3 py-2 ${
+                        notification.isRead
+                          ? 'border-gray-200 bg-white'
+                          : 'border-red-200 bg-red-50/40'
+                      }`}
+                    >
+                      <p className="text-sm font-semibold text-gray-900">{notification.title}</p>
+                      <p className="mt-1 text-xs text-gray-600">{notification.message}</p>
+                      <p className="mt-1 text-[11px] text-gray-400">{formatDateTime(notification.createdAt)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+
+            <article className="rounded-xl border border-gray-200 bg-white p-4 md:p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">Voucher cua ban</h2>
+
+              {vouchers.length === 0 ? (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                  Ban chua co voucher nao.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {vouchers.map((voucher) => (
+                    <div key={voucher._id} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-gray-900">{voucher.code}</p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                            voucher.status === 'available'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : voucher.status === 'used'
+                                ? 'bg-gray-200 text-gray-700'
+                                : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {voucher.status === 'available'
+                            ? 'San sang'
+                            : voucher.status === 'used'
+                              ? 'Da dung'
+                              : 'Het han'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-700">{formatVoucherValue(voucher)}</p>
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        Don toi thieu: {formatCurrency(voucher.minOrderValue || 0)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          </section>
+
           <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-6">
             <h2 className="mb-4 text-xl font-bold text-gray-900">Các đơn hàng đã mua</h2>
 
@@ -464,6 +580,12 @@ const MyOrdersPage = () => {
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-700">{order.status || 'Pending'}</p>
                         <p className="text-base font-bold text-[#d70018]">{formatCurrency(order.totalPrice)}</p>
+                        {Number(order.discountAmount || 0) > 0 ? (
+                          <p className="text-xs text-emerald-700">
+                            Giam {formatCurrency(order.discountAmount)}
+                            {order.appliedVoucher?.code ? ` (${order.appliedVoucher.code})` : ''}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
 

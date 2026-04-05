@@ -20,6 +20,7 @@ const ProductSection = ({ title, products = [], filters = ['Apple', 'Samsung', '
             originalPrice={product.originalPrice}
             promo={product.promoText || product.promo}
             rating={product.rating}
+            stock={product.stock}
           />
         ))}
       </div>

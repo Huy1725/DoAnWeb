@@ -18,6 +18,9 @@ const AdminLayout = () => {
         <div className="border-b border-gray-700 p-4 text-xl font-bold">CELLPHONES ADMIN</div>
 
         <nav className="space-y-1 px-4 py-4 text-sm">
+          <Link to="/dashboard" className="block rounded px-3 py-2 hover:bg-gray-700">
+            Tổng hợp & Báo cáo
+          </Link>
           <Link to="/orders" className="block rounded px-3 py-2 hover:bg-gray-700">
             Quản lý Đơn hàng
           </Link>
@@ -32,6 +35,9 @@ const AdminLayout = () => {
           </Link>
           <Link to="/users" className="block rounded px-3 py-2 hover:bg-gray-700">
             Quản lý Tài khoản
+          </Link>
+          <Link to="/promotions" className="block rounded px-3 py-2 hover:bg-gray-700">
+            Quản lý Khuyến mãi
           </Link>
         </nav>
 

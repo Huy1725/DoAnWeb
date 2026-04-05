@@ -6,6 +6,9 @@ const {
 	deleteUser,
 	updateUserRole,
 	getMyProfile,
+	getMyNotifications,
+	markMyNotificationsRead,
+	getMyVouchers,
 	updateMyAvatar,
 	getUserAvatar,
 } = require('../controllers/user.controller');
@@ -16,6 +19,12 @@ const router = express.Router();
 
 // Lấy hồ sơ user hiện tại.
 router.get('/me/profile', protect, getMyProfile);
+// Lấy thông báo của user hiện tại.
+router.get('/me/notifications', protect, getMyNotifications);
+// Đánh dấu tất cả thông báo đã đọc.
+router.put('/me/notifications/read-all', protect, markMyNotificationsRead);
+// Lấy danh sách voucher của user hiện tại.
+router.get('/me/vouchers', protect, getMyVouchers);
 // Upload/cập nhật avatar user hiện tại.
 router.put('/me/avatar', protect, upload.single('avatar'), updateMyAvatar);
 // Lấy avatar theo user id.

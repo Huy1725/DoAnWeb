@@ -37,6 +37,7 @@ const AdminProductsPage = () => {
     originalPrice: '',
     discountBadge: '',
     rating: 5,
+    stock: 20,
     promoText: '',
     productInfo: '',
     category: '',
@@ -102,6 +103,7 @@ const AdminProductsPage = () => {
       originalPrice: '',
       discountBadge: '',
       rating: 5,
+      stock: 20,
       promoText: '',
       productInfo: '',
       category: categories[0]?._id || '',
@@ -122,7 +124,7 @@ const AdminProductsPage = () => {
     const { name, value } = event.target;
     setCreateForm((prev) => ({
       ...prev,
-      [name]: name === 'rating' ? Number(value) : value,
+      [name]: name === 'rating' || name === 'stock' ? Number(value) : value,
     }));
   };
 
@@ -192,6 +194,7 @@ const AdminProductsPage = () => {
       submitFormData.append('originalPrice', createForm.originalPrice);
       submitFormData.append('discountBadge', createForm.discountBadge);
       submitFormData.append('rating', String(createForm.rating));
+      submitFormData.append('stock', String(createForm.stock));
       submitFormData.append('promoText', createForm.promoText);
       submitFormData.append('productInfo', createForm.productInfo);
       submitFormData.append('category', createForm.category);
@@ -353,6 +356,16 @@ const AdminProductsPage = () => {
                   required
                 />
                 <input
+                  type="number"
+                  min="0"
+                  name="stock"
+                  value={createForm.stock}
+                  onChange={handleCreateInputChange}
+                  placeholder="Số lượng tồn kho"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3"
+                  required
+                />
+                <input
                   type="file"
                   accept="image/*"
                   onChange={(event) => setImageFile(event.target.files?.[0] || null)}
@@ -463,6 +476,7 @@ const AdminProductsPage = () => {
                 <th className="border-b border-gray-200 px-4 py-3 font-semibold">Tên</th>
                 <th className="border-b border-gray-200 px-4 py-3 font-semibold">DANH MỤC</th>
                 <th className="border-b border-gray-200 px-4 py-3 font-semibold">Giá</th>
+                <th className="border-b border-gray-200 px-4 py-3 font-semibold">Tồn kho</th>
                 <th className="border-b border-gray-200 px-4 py-3 font-semibold">Hành động</th>
               </tr>
             </thead>
@@ -473,6 +487,19 @@ const AdminProductsPage = () => {
                   <td className="border-b border-gray-100 px-4 py-3 font-medium">{product.name}</td>
                   <td className="border-b border-gray-100 px-4 py-3">{product.category?.name || 'Chưa phân loại'}</td>
                   <td className="border-b border-gray-100 px-4 py-3 text-[#d70018]">{product.price}</td>
+                  <td className="border-b border-gray-100 px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        Number(product.stock || 0) <= 0
+                          ? 'bg-red-100 text-red-700'
+                          : Number(product.stock || 0) <= 5
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                      }`}
+                    >
+                      {Number(product.stock || 0)}
+                    </span>
+                  </td>
                   <td className="border-b border-gray-100 px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Link to={`/product/${product._id}/edit`} className="rounded-md border border-blue-200 px-3 py-1.5 text-xs text-blue-600">

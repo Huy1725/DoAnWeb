@@ -74,6 +74,8 @@ const ProductDetailPage = () => {
         ];
 
   const selectedVariantData = variants[selectedVariant] || variants[0];
+  const stock = Math.max(0, Math.floor(Number(product.stock ?? 0)));
+  const isOutOfStock = stock <= 0;
   const productInfo =
     product.productInfo ||
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc finibus consequat est, vel tristique velit ultricies non.';
@@ -90,13 +92,29 @@ const ProductDetailPage = () => {
 
   // Mua ngay: thêm vào giỏ rồi điều hướng sang trang giỏ.
   const handleBuyNow = () => {
-    addToCart(product);
+    if (isOutOfStock) {
+      alert('Sản phẩm đã hết hàng. Vui lòng chọn sản phẩm khác.');
+      return;
+    }
+
+    addToCart({
+      ...product,
+      price: selectedVariantData?.price || product.price,
+    });
     navigate('/cart');
   };
 
   // Thêm sản phẩm vào giỏ và tiếp tục ở lại trang chi tiết.
   const handleAddToCart = () => {
-    addToCart(product);
+    if (isOutOfStock) {
+      alert('Sản phẩm đã hết hàng. Vui lòng chọn sản phẩm khác.');
+      return;
+    }
+
+    addToCart({
+      ...product,
+      price: selectedVariantData?.price || product.price,
+    });
   };
 
   const categoryId = typeof product.category === 'object' ? product.category?._id : product.category;
@@ -144,6 +162,10 @@ const ProductDetailPage = () => {
             <span className="text-lg text-gray-400 line-through">{product.originalPrice}</span>
           </div>
 
+          <p className={`text-sm font-semibold ${isOutOfStock ? 'text-red-600' : 'text-emerald-700'}`}>
+            {isOutOfStock ? 'Hết hàng' : `Còn ${stock} sản phẩm trong kho`}
+          </p>
+
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-gray-700">Phiên bản</h2>
             <div className="grid grid-cols-3 gap-2">
@@ -186,7 +208,8 @@ const ProductDetailPage = () => {
             <button
               type="button"
               onClick={handleBuyNow}
-              className="w-full rounded-lg bg-red-600 px-4 py-3 text-center text-white"
+              disabled={isOutOfStock}
+              className="w-full rounded-lg bg-red-600 px-4 py-3 text-center text-white disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               <span className="block text-base font-bold uppercase">MUA NGAY</span>
               <span className="block text-xs">Giao tận nơi hoặc nhận tại cửa hàng</span>
@@ -196,7 +219,8 @@ const ProductDetailPage = () => {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="flex items-center justify-center gap-2 rounded-lg border border-red-600 px-4 py-3 font-semibold text-red-600"
+                disabled={isOutOfStock}
+                className="flex items-center justify-center gap-2 rounded-lg border border-red-600 px-4 py-3 font-semibold text-red-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
               >
                 <span>🛒</span>
                 <span>THÊM VÀO GIỎ</span>

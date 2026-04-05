@@ -30,6 +30,38 @@ const orderSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    subtotalPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    appliedVoucher: {
+      code: {
+        type: String,
+        default: null,
+        trim: true,
+      },
+      discountType: {
+        type: String,
+        enum: ['fixed', 'percent', null],
+        default: null,
+      },
+      discountValue: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      maxDiscountAmount: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+    },
     totalPrice: {
       type: Number,
       required: true,

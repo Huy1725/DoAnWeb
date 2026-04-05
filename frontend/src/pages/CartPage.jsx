@@ -7,6 +7,16 @@ import { API_BASE_URL } from '../config/url';
 // Chuyển chuỗi giá về số để tính tổng tiền.
 const parsePrice = (price) => Number((price || '').replace(/[^0-9]/g, ''));
 
+const getItemStock = (item) => {
+  const parsedStock = Number(item?.stock);
+
+  if (!Number.isFinite(parsedStock)) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor(parsedStock));
+};
+
 // Format tiền tệ theo chuẩn hiển thị VND.
 const formatCurrency = (amount) => `${amount.toLocaleString('vi-VN')}đ`;
 
@@ -28,6 +38,16 @@ const CartPage = () => {
   const subtotal = cartItems.reduce((sum, item) => {
     return sum + parsePrice(item.price) * (item.quantity || 1);
   }, 0);
+
+  const hasInvalidStockItem = cartItems.some((item) => {
+    const stock = getItemStock(item);
+
+    if (stock === null) {
+      return false;
+    }
+
+    return stock <= 0 || (item.quantity || 1) > stock;
+  });
 
   return (
     <MainContent>
@@ -62,6 +82,23 @@ const CartPage = () => {
                     <div>
                       <h2 className="font-semibold text-gray-900">{item.name}</h2>
                       <p className="text-sm text-[#d70018]">{item.price}</p>
+                      {(() => {
+                        const stock = getItemStock(item);
+
+                        if (stock === null) {
+                          return null;
+                        }
+
+                        if (stock <= 0) {
+                          return <p className="text-xs font-semibold text-red-600">Hết hàng</p>;
+                        }
+
+                        return (
+                          <p className="text-xs text-gray-500">
+                            Tồn kho: <span className="font-semibold text-gray-700">{stock}</span>
+                          </p>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -76,7 +113,11 @@ const CartPage = () => {
                       <button
                         type="button"
                         onClick={() => updateQuantity(productId, (item.quantity || 1) + 1)}
-                        className="h-8 w-8 rounded border border-gray-200 text-gray-700"
+                        disabled={
+                          getItemStock(item) !== null &&
+                          (item.quantity || 1) >= Number(getItemStock(item))
+                        }
+                        className="h-8 w-8 rounded border border-gray-200 text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                       >
                         +
                       </button>
@@ -96,19 +137,24 @@ const CartPage = () => {
 
             <div className="mt-6 flex items-center justify-end border-t border-gray-100 pt-4">
               <div className="w-full max-w-sm space-y-3">
+                {hasInvalidStockItem ? (
+                  <p className="text-right text-sm font-medium text-red-600">
+                    Giỏ hàng có sản phẩm vượt quá tồn kho hoặc đã hết hàng.
+                  </p>
+                ) : null}
                 <p className="text-right text-lg font-bold text-gray-900">
                   Tạm tính: <span className="text-[#d70018]">{formatCurrency(subtotal)}</span>
                 </p>
                 <Link
                   to="/checkout"
-                  aria-disabled={cartItems.length === 0}
+                  aria-disabled={cartItems.length === 0 || hasInvalidStockItem}
                   onClick={(event) => {
-                    if (cartItems.length === 0) {
+                    if (cartItems.length === 0 || hasInvalidStockItem) {
                       event.preventDefault();
                     }
                   }}
                   className={`block w-full rounded-lg p-3 text-center font-bold text-white ${
-                    cartItems.length === 0
+                    cartItems.length === 0 || hasInvalidStockItem
                       ? 'cursor-not-allowed bg-gray-400'
                       : 'bg-[#d70018] hover:opacity-90'
                   }`}

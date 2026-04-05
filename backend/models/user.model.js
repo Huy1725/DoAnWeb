@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    membershipTier: {
+      type: String,
+      enum: ['S-NULL', 'S-NEW', 'S-MEM', 'S-VIP'],
+      default: 'S-NULL',
+    },
     avatarData: {
       type: Buffer,
     },

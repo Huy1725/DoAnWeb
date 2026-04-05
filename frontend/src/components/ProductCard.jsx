@@ -16,11 +16,15 @@ const ProductCard = ({
   originalPrice,
   promo = 'Thu cũ lên đời trợ giá 1 triệu',
   rating = 5,
+  stock,
 }) => {
   const productLink = productId ? `/product/${productId}` : '#';
   const imageSrc = productId
     ? `${API_BASE_URL}/api/products/${productId}/image`
     : image || 'https://placehold.co/300x300?text=Product';
+  const parsedStock = Number(stock);
+  const hasStockInfo = Number.isFinite(parsedStock);
+  const normalizedStock = hasStockInfo ? Math.max(0, Math.floor(parsedStock)) : null;
 
   return (
     <Link to={productLink}>
@@ -45,6 +49,12 @@ const ProductCard = ({
         </div>
 
         <div className="mt-2 rounded bg-gray-100 p-2 text-xs font-medium text-gray-600">{promo}</div>
+
+        {hasStockInfo ? (
+          <p className={`mt-2 text-xs font-semibold ${normalizedStock > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+            {normalizedStock > 0 ? `Tồn kho: ${normalizedStock}` : 'Hết hàng'}
+          </p>
+        ) : null}
 
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-0.5">
