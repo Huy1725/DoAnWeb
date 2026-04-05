@@ -1,7 +1,14 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const formatCurrency = (amount) => `${Number(amount || 0).toLocaleString('vi-VN')}đ`;
+const formatDate = (value) => {
+  if (!value) {
+    return '--';
+  }
+
+  return new Date(value).toLocaleString('vi-VN');
+};
 
 const createDefaultForm = () => ({
   name: '',
@@ -16,15 +23,28 @@ const createDefaultForm = () => ({
 // Trang quan ly khuyen mai: tao voucher giam tien truc tiep hoac giam theo %.
 const AdminPromotionsPage = () => {
   const { userInfo } = useContext(AuthContext);
+
   const [promotions, setPromotions] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [userVouchers, setUserVouchers] = useState([]);
+
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedPromotionId, setSelectedPromotionId] = useState('');
+  const [voucherStatusFilter, setVoucherStatusFilter] = useState('available');
+
   const [formData, setFormData] = useState(createDefaultForm());
-  const [loading, setLoading] = useState(true);
+  const [loadingPromotions, setLoadingPromotions] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingUserVouchers, setLoadingUserVouchers] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
+  const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchPromotions = async () => {
     try {
-      setLoading(true);
+      setLoadingPromotions(true);
+
       const response = await fetch('/api/promotions', {
         headers: {
           Authorization: `Bearer ${userInfo.token}`,
@@ -42,13 +62,99 @@ const AdminPromotionsPage = () => {
     } catch (err) {
       setError(err.message || 'Da xay ra loi khi tai voucher');
     } finally {
-      setLoading(false);
+      setLoadingPromotions(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true);
+
+      const response = await fetch('/api/users', {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Khong the tai danh sach tai khoan');
+      }
+
+      const data = await response.json();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message || 'Da xay ra loi khi tai tai khoan');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const fetchUserVouchers = async (userId = selectedUserId, status = voucherStatusFilter) => {
+    if (!userId) {
+      setUserVouchers([]);
+      return;
+    }
+
+    try {
+      setLoadingUserVouchers(true);
+
+      const query = new URLSearchParams({ userId });
+      if (status && status !== 'all') {
+        query.set('status', status);
+      }
+
+      const response = await fetch(`/api/promotions/user-vouchers?${query.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Khong the tai voucher cua tai khoan');
+      }
+
+      const data = await response.json();
+      setUserVouchers(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Da xay ra loi khi tai voucher cua tai khoan');
+    } finally {
+      setLoadingUserVouchers(false);
     }
   };
 
   useEffect(() => {
     fetchPromotions();
+    fetchUsers();
   }, [userInfo.token]);
+
+  useEffect(() => {
+    if (!selectedUserId && users.length > 0) {
+      setSelectedUserId(users[0]._id);
+    }
+  }, [users, selectedUserId]);
+
+  const assignablePromotions = useMemo(
+    () => promotions.filter((promotion) => promotion.active && !promotion.autoTierReward),
+    [promotions]
+  );
+
+  useEffect(() => {
+    if (!selectedPromotionId && assignablePromotions.length > 0) {
+      setSelectedPromotionId(assignablePromotions[0]._id);
+    }
+  }, [assignablePromotions, selectedPromotionId]);
+
+  useEffect(() => {
+    fetchUserVouchers(selectedUserId, voucherStatusFilter);
+  }, [selectedUserId, voucherStatusFilter]);
+
+  const selectedUser = useMemo(
+    () => users.find((user) => user._id === selectedUserId) || null,
+    [users, selectedUserId]
+  );
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -121,12 +227,78 @@ const AdminPromotionsPage = () => {
     }
   };
 
+  const handleAssignVoucherToUser = async (event) => {
+    event.preventDefault();
+
+    if (!selectedUserId || !selectedPromotionId) {
+      setError('Vui long chon tai khoan va voucher de phat');
+      return;
+    }
+
+    try {
+      setAssigning(true);
+
+      const response = await fetch('/api/promotions/assign-voucher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUserId,
+          promotionId: selectedPromotionId,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Khong the phat voucher cho tai khoan');
+      }
+
+      await fetchUserVouchers(selectedUserId, voucherStatusFilter);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Da xay ra loi khi phat voucher');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleDeleteUserVoucher = async (voucher) => {
+    const confirmed = window.confirm(`Ban co chac muon xoa voucher ${voucher.code}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/promotions/user-vouchers/${voucher._id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Khong the xoa voucher');
+      }
+
+      await fetchUserVouchers(selectedUserId, voucherStatusFilter);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Da xay ra loi khi xoa voucher');
+    }
+  };
+
+  const isPageLoading = loadingPromotions || loadingUsers;
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Quan ly khuyen mai</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Tao voucher giam truc tiep tien hoac giam theo %, co gioi han so tien giam toi da.
+          Tao voucher, phat voucher cho tai khoan cu the va xoa voucher con kha dung cua tai khoan.
         </p>
       </div>
 
@@ -216,7 +388,139 @@ const AdminPromotionsPage = () => {
         </button>
       </form>
 
-      {loading ? (
+      <form
+        onSubmit={handleAssignVoucherToUser}
+        className="rounded-xl border border-gray-200 bg-white p-5 space-y-4"
+      >
+        <h2 className="text-lg font-semibold text-gray-900">Phat voucher cho tai khoan</h2>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <select
+            value={selectedUserId}
+            onChange={(event) => setSelectedUserId(event.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2"
+            required
+          >
+            <option value="">-- Chon tai khoan --</option>
+            {users.map((user) => (
+              <option key={user._id} value={user._id}>
+                {user.name} - {user.email}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedPromotionId}
+            onChange={(event) => setSelectedPromotionId(event.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2"
+            required
+          >
+            <option value="">-- Chon voucher can phat --</option>
+            {assignablePromotions.map((promotion) => (
+              <option key={promotion._id} value={promotion._id}>
+                {promotion.code} - {promotion.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          disabled={assigning || !selectedUserId || !selectedPromotionId}
+          className="w-full rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {assigning ? 'Dang phat voucher...' : 'Phat voucher cho tai khoan da chon'}
+        </button>
+      </form>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Voucher cua tai khoan {selectedUser ? selectedUser.name : ''}
+          </h2>
+
+          <select
+            value={voucherStatusFilter}
+            onChange={(event) => setVoucherStatusFilter(event.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">Tat ca trang thai</option>
+            <option value="available">Dang kha dung</option>
+            <option value="used">Da su dung</option>
+            <option value="expired">Het han</option>
+          </select>
+        </div>
+
+        {loadingUserVouchers ? (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600">
+            Dang tai voucher cua tai khoan...
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead className="bg-gray-50 text-gray-700">
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-3 font-semibold">Ma voucher</th>
+                  <th className="border-b border-gray-200 px-4 py-3 font-semibold">Gia tri</th>
+                  <th className="border-b border-gray-200 px-4 py-3 font-semibold">Nguon</th>
+                  <th className="border-b border-gray-200 px-4 py-3 font-semibold">Trang thai</th>
+                  <th className="border-b border-gray-200 px-4 py-3 font-semibold">Ngay cap</th>
+                  <th className="border-b border-gray-200 px-4 py-3 font-semibold">Hanh dong</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-700">
+                {userVouchers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-5 text-center text-gray-500">
+                      Tai khoan nay chua co voucher theo bo loc hien tai.
+                    </td>
+                  </tr>
+                ) : (
+                  userVouchers.map((voucher) => (
+                    <tr key={voucher._id} className="odd:bg-white even:bg-gray-50/40">
+                      <td className="border-b border-gray-100 px-4 py-3 font-semibold">{voucher.code}</td>
+                      <td className="border-b border-gray-100 px-4 py-3">
+                        {voucher.discountType === 'fixed'
+                          ? formatCurrency(voucher.discountValue)
+                          : `${voucher.discountValue}% (max ${formatCurrency(
+                              voucher.maxDiscountAmount || 0
+                            )})`}
+                      </td>
+                      <td className="border-b border-gray-100 px-4 py-3">{voucher.source}</td>
+                      <td className="border-b border-gray-100 px-4 py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            voucher.status === 'available'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : voucher.status === 'used'
+                                ? 'bg-gray-200 text-gray-700'
+                                : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {voucher.status}
+                        </span>
+                      </td>
+                      <td className="border-b border-gray-100 px-4 py-3">{formatDate(voucher.createdAt)}</td>
+                      <td className="border-b border-gray-100 px-4 py-3">
+                        <button
+                          type="button"
+                          disabled={voucher.status !== 'available'}
+                          onClick={() => handleDeleteUserVoucher(voucher)}
+                          className="rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Xoa voucher
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {isPageLoading ? (
         <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-gray-600">
           Dang tai du lieu...
         </div>

@@ -1,4 +1,6 @@
 const Promotion = require('../models/promotion.model');
+const User = require('../models/user.model');
+const UserVoucher = require('../models/userVoucher.model');
 
 const normalizePromotionCode = (value = '') => String(value).trim().toUpperCase();
 
@@ -14,6 +16,20 @@ const parsePositiveNumber = (value, fallback = 0) => {
   }
 
   return parsedValue;
+};
+
+const normalizeVoucherStatus = (value = '') => {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = String(value).trim().toLowerCase();
+
+  if (['available', 'used', 'expired'].includes(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  return null;
 };
 
 // Tao voucher khuyen mai moi (admin).
@@ -106,8 +122,110 @@ const updatePromotionStatus = async (req, res) => {
   }
 };
 
+// Admin phat voucher cho 1 tai khoan cu the.
+const assignVoucherToUser = async (req, res) => {
+  try {
+    const { userId, promotionId } = req.body;
+
+    if (!userId || !promotionId) {
+      return res.status(400).json({ message: 'Vui long chon tai khoan va voucher can phat' });
+    }
+
+    const [user, promotion] = await Promise.all([
+      User.findById(userId).select('_id name email'),
+      Promotion.findById(promotionId),
+    ]);
+
+    if (!user) {
+      return res.status(404).json({ message: 'Khong tim thay tai khoan duoc chon' });
+    }
+
+    if (!promotion) {
+      return res.status(404).json({ message: 'Khong tim thay voucher duoc chon' });
+    }
+
+    if (!promotion.active) {
+      return res.status(400).json({ message: 'Voucher dang tam tat, khong the phat' });
+    }
+
+    const issuedVoucher = await UserVoucher.create({
+      user: user._id,
+      promotion: promotion._id,
+      code: promotion.code,
+      discountType: promotion.discountType,
+      discountValue: promotion.discountValue,
+      maxDiscountAmount: promotion.maxDiscountAmount,
+      minOrderValue: promotion.minOrderValue,
+      status: 'available',
+      source: 'manual',
+      issuedReason: `Admin phat voucher ${promotion.code}`,
+    });
+
+    return res.status(201).json({
+      message: `Da phat voucher ${promotion.code} cho ${user.name}`,
+      voucher: issuedVoucher,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to assign voucher', error: error.message });
+  }
+};
+
+// Admin lay danh sach voucher cua 1 tai khoan.
+const getUserVouchersForAdmin = async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'Thieu userId de lay danh sach voucher' });
+    }
+
+    const statusFilter = normalizeVoucherStatus(req.query.status);
+    const query = { user: userId };
+
+    if (statusFilter) {
+      query.status = statusFilter;
+    }
+
+    const vouchers = await UserVoucher.find(query)
+      .populate('user', 'name email')
+      .populate('promotion', 'name code active')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json(vouchers);
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to fetch user vouchers', error: error.message });
+  }
+};
+
+// Admin xoa voucher con kha dung cua tai khoan duoc chon.
+const deleteAvailableUserVoucher = async (req, res) => {
+  try {
+    const userVoucher = await UserVoucher.findById(req.params.id).populate('user', 'name').lean();
+
+    if (!userVoucher) {
+      return res.status(404).json({ message: 'Khong tim thay voucher cua tai khoan' });
+    }
+
+    if (userVoucher.status !== 'available') {
+      return res.status(400).json({ message: 'Chi duoc xoa voucher dang kha dung' });
+    }
+
+    await UserVoucher.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+      message: `Da xoa voucher ${userVoucher.code} cua ${userVoucher.user?.name || 'nguoi dung'}`,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to delete user voucher', error: error.message });
+  }
+};
+
 module.exports = {
   createPromotion,
   getPromotions,
   updatePromotionStatus,
+  assignVoucherToUser,
+  getUserVouchersForAdmin,
+  deleteAvailableUserVoucher,
 };
